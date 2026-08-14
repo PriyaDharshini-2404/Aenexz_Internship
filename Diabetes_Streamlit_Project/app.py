@@ -52,12 +52,36 @@ df = diabetes.frame
 # SCORES (read from the saved model comparison)
 # =========================================================
 
-results_df = pd.read_csv(BASE_DIR / "model_results.csv")
+RESULTS_PATH = BASE_DIR / "model_results.csv"
+
+if not RESULTS_PATH.exists():
+
+    st.error(
+        "🚫 `model_results.csv` was not found next to `app.py`, so the "
+        "scores and the comparison table cannot be shown.\n\n"
+        "Run the notebook cell that saves it (`results_df.to_csv(...)`), "
+        "and make sure the file is committed to the repository when "
+        "deploying."
+    )
+
+    st.stop()
+
+results_df = pd.read_csv(RESULTS_PATH)
 
 
 def r2_of(model_name):
+    """R² for a model as a percentage, or None if it is not in the CSV."""
+
     row = results_df[results_df["Model"] == model_name]
+
+    if row.empty:
+        return None
+
     return float(row["R² Score"].iloc[0]) * 100
+
+
+def fmt_r2(value):
+    return "n/a" if value is None else f"{value:.2f}%"
 
 
 BASELINE_R2 = r2_of("Linear Regression")
@@ -649,7 +673,7 @@ if page == "🏠 Home":
 
     st.markdown(
         '<div class="card">'
-        '<div class="section-title">👥 Welcome 👋 </div>'
+        '<div class="section-title">👥 Welcome 👋</div>'
         '<div class="section-body">'
         'This application uses a tuned '
         '<span class="accent-purple">Gradient Boosting Regression</span> '
@@ -736,7 +760,7 @@ if page == "🏠 Home":
         '<div class="tuning-side tuning-before">'
         '<div class="tuning-heading">📊 Before Tuning</div>'
         '<div class="tuning-model">Linear Regression (Baseline Model)</div>'
-        f'<div class="tuning-score">R² Score: {BASELINE_R2:.2f}%</div>'
+        f'<div class="tuning-score">R² Score: {fmt_r2(BASELINE_R2)}</div>'
         '</div>'
 
         '<div class="tuning-vs">VS</div>'
@@ -744,7 +768,7 @@ if page == "🏠 Home":
         '<div class="tuning-side tuning-after">'
         '<div class="tuning-heading">After Tuning 🚀</div>'
         '<div class="tuning-model">Gradient Boosting Regressor (Tuned Model)</div>'
-        f'<div class="tuning-score">R² Score: {TUNED_R2:.2f}%</div>'
+        f'<div class="tuning-score">R² Score: {fmt_r2(TUNED_R2)}</div>'
         '</div>'
 
         '<div class="tuning-badge">'
